@@ -13,93 +13,52 @@ import { Box } from "@mui/system";
 import React, { useState } from "react";
 import { getAuth } from "firebase/auth";
 import { uploadImage } from "../Firebaseconfig/storage";
+import { getStorage, ref, uploadBytes } from "firebase/storage";
 
 const ExpenseBox = ({ onClose }) => {
   const [formData, setFormData] = useState({});
   const [open, setOpen] = useState(false);
   const [imageUrl, setImageUrl] = useState("");
   const [files, setFiles] = useState(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+  const [snackbarMessage, setSnackbarMessage] = useState("");
 
   const authUser = getAuth();
 
-  // const handleSubmit = async (event) => {
-  //   event.preventDefault();
-  //   try {
-  //     await uploadImage(formData.file);
-  //     console.log("success");
-  //     onClose();
-  //     setFormData({});
-  //     setOpen(true)
-  //     // <Snackbar open={open} autoHideDuration={5000}>
-  //     //   <Alert severity="success" sx={{ width: "100%" }}>
-  //     //     Expense Added !{" "}
-  //     //   </Alert>
-  //     // </Snackbar>;
-  //   } catch (error) {
-  //     console.log("Unsuccess");
-  //     setOpen(true)
-
-  //     // <Snackbar open={open} autoHideDuration={5000}>
-  //     //   <Alert severity="error" sx={{ width: "100%" }}>
-  //     //     Error please try again !
-  //     //   </Alert>
-  //     // </Snackbar>;
-  //   }
-  // };
-
-  //  if (files) {
-  //   setFormData((prevFormData) =>({
-  //     ...prevFormData,
-  //     file : files[0],
-  //   }));
-
-  //   const reader = new FileReader();
-  //   reader.onload = (e) =>{
-  //     setImageUrl(e.target.result);
-  //   };
-  //   reader.onload = (e) =>{
-  //     setImageUrl(e.target.result);
-  //   };
-  //   reader.readAsDataURL(files[0]);
-
-  // }else{
-  //   setFormData((prevFormData)=>({...prevFormData,[name]:value}));
-  // }
-
-  const handleSubmit = async (event, name, value) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+
     try {
-      if (files) {
-        setFormData((prevFormData) => ({
-          ...prevFormData,
-          file: files[0],
-        }));
+      // First, upload the image to Firebase Storage
+      const storage = getStorage();
+      const fileRef = ref(storage, `expenseImages/${files[0].name}`);
+      const snapshot = await uploadBytes(fileRef, files[0]);
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setImageUrl(e.target.result);
-        };
-        reader.readAsDataURL(files[0]);
-      } else {
-        setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
-        // <Snackbar open={open} autoHideDuration={5000}>
-        //   <Alert severity="error" sx={{ width: "100%" }}>
-        //     Error please try again !
-        //   </Alert>
-        // </Snackbar>;
-      }
-      console.log("successful");
+      // Once the image is uploaded, add the expense data to the database
+      const expenseData = {
+        ...formData,
+        imageUrl: await snapshot.ref.getDownloadURL(),
+      };
+
+      // Add code here to store expenseData in the database, using the API or SDK of your choice
+
+
+
+      
+      // Reset form data and close dialog
+      setFormData({});
+      setFiles(null);
+      handleClose();
+      setSnackbarSeverity("success");
+      setSnackbarMessage("Expense added successfully!");
     } catch (error) {
-      console.log("Unsuccess");
-      setOpen(true);
-
-      // <Snackbar open={open} autoHideDuration={5000}>
-      //   <Alert severity="error" sx={{ width: "100%" }}>
-      //     Error please try again !
-      //   </Alert>
-      // </Snackbar>;
+      console.log("Error uploading image to Firebase Storage:", error);
+      setSnackbarSeverity("error");
+      setSnackbarMessage("Error adding expense. Please try again.");
+    } finally {
+      setSnackbarOpen(true);
     }
-    handleClose();
   };
 
   const handleClose = () => {
@@ -110,18 +69,10 @@ const ExpenseBox = ({ onClose }) => {
 
   const handleInputChange = (event) => {
     const { name, value, files } = event.target;
-    // setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
 
     if (files) {
-      setFormData((prevFormData) => ({
-        ...prevFormData,
-        file: files[0],
-      }));
-
+      setFiles(files);
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setImageUrl(e.target.result);
-      };
       reader.onload = (e) => {
         setImageUrl(e.target.result);
       };
@@ -130,6 +81,7 @@ const ExpenseBox = ({ onClose }) => {
       setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
     }
   };
+
   return (
     <>
       <Box mt={10} ml={10}>
