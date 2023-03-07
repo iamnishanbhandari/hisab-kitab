@@ -32,22 +32,19 @@ const ExpenseBox = ({ onClose }) => {
     event.preventDefault();
 
     try {
-      // First, upload the image to Firebase Storage
       const storage = getStorage();
       const fileRef = ref(storage, `expenseImages/${files[0].name}`);
       const snapshot = await uploadBytes(fileRef, files[0]);
 
-      // Once the image is uploaded, add the expense data to the database
       const expenseData = {
         ...formData,
         imageUrl: await getDownloadURL(fileRef),
       };
+      console.log(formData)
 
-      // Add code here to store expenseData in the database, using the API or SDK of your choice
-
+      console.log(expenseData);
       await addDoc(collection(firestore, "expenses"), expenseData);
 
-      // Reset form data and close dialog
       setFormData({});
       setFiles(null);
       handleClose();
