@@ -14,7 +14,8 @@ import React, { useState } from "react";
 import { getAuth } from "firebase/auth";
 import { uploadImage } from "../Firebaseconfig/storage";
 import { getStorage, ref, uploadBytes } from "firebase/storage";
-
+import { getFirestore, collection, addDoc } from "firebase/firestore";
+import { getDownloadURL } from "firebase/storage";
 const ExpenseBox = ({ onClose }) => {
   const [formData, setFormData] = useState({});
   const [open, setOpen] = useState(false);
@@ -25,6 +26,7 @@ const ExpenseBox = ({ onClose }) => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
 
   const authUser = getAuth();
+  const firestore = getFirestore();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -38,14 +40,13 @@ const ExpenseBox = ({ onClose }) => {
       // Once the image is uploaded, add the expense data to the database
       const expenseData = {
         ...formData,
-        imageUrl: await snapshot.ref.getDownloadURL(),
+        imageUrl: await getDownloadURL(fileRef),
       };
 
       // Add code here to store expenseData in the database, using the API or SDK of your choice
 
+      await addDoc(collection(firestore, "expenses"), expenseData);
 
-
-      
       // Reset form data and close dialog
       setFormData({});
       setFiles(null);
@@ -81,7 +82,13 @@ const ExpenseBox = ({ onClose }) => {
       setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
     }
   };
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
 
+    setSnackbarOpen(false);
+  };
   return (
     <>
       <Box mt={10} ml={10}>
@@ -153,13 +160,21 @@ const ExpenseBox = ({ onClose }) => {
           <Button onClick={handleClose}>Close</Button>
           <Button onClick={handleSubmit}>Submit</Button>
         </DialogActions>
-    
       </Dialog>
-      <Snackbar open={open} autoHideDuration={5000}>
-      <Alert severity="success" sx={{ width: "100%" }}>
-        Expense Added !{" "}
-      </Alert>
-    </Snackbar>;
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={handleSnackbarClose}
+        onExited={() => {
+          setSnackbarSeverity("success");
+          setSnackbarMessage("");
+        }}
+      >
+        <Alert severity={snackbarSeverity} sx={{ width: "100%" }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
+      ;
     </>
   );
 };
