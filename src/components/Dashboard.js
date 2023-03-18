@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import NavBar from "./NavBar";
 import { useAuth } from "../Firebaseconfig/auth";
 import { CircularProgress } from "@mui/material";
-import ExpenseBox from "./ExpenseBox";
+import Expense from "./Expense";
 
 const Dashboard = () => {
   const { authUser, isLoading } = useAuth();
@@ -19,7 +19,7 @@ window.location.href = '/'
   ) : (
     <div>
       <NavBar />
-      <ExpenseBox/>
+      <Expense/>
 
     </div>
   );
