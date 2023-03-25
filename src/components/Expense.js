@@ -38,6 +38,21 @@ const Expense = ({ onClose }) => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     const { name, address, amount, items } = userData;
+    const res = fetch(
+      "https://hisab-kitab-1bbd9-default-rtdb.firebaseio.com/userDataRecords.json",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          address,
+          amount,
+          items,
+        }),
+      }
+    );
     if (name && address && amount && items) {
       setSnackbarSeverity("success");
       setSnackbarMessage("Expense added successfully");
@@ -56,11 +71,11 @@ const Expense = ({ onClose }) => {
         items: "",
       });
       setFormData({}); // reset formData state to empty object
-
     } else {
       setSnackbarSeverity("error");
       setSnackbarMessage("Please fill all data");
-      setSnackbarOpen(true);    }
+      setSnackbarOpen(true);
+    }
   };
 
   const handleClose = () => {
