@@ -8,9 +8,11 @@ import {
   Typography,
   Snackbar,
   Alert,
+  IconButton,
 } from "@mui/material";
 import { Box } from "@mui/system";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 const Expense = ({ onClose }) => {
   const [formData, setFormData] = useState({});
@@ -91,6 +93,51 @@ const Expense = ({ onClose }) => {
 
     setSnackbarOpen(false);
   };
+
+  useEffect(() => {
+    fetch(
+      "https://hisab-kitab-1bbd9-default-rtdb.firebaseio.com/userDataRecords.json"
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        const fetchedExpenses = [];
+        for (const key in data) {
+          fetchedExpenses.push({
+            id: key,
+            name: data[key].name,
+            address: data[key].address,
+            amount: data[key].amount,
+            items: data[key].items,
+          });
+        }
+        setExpenses(fetchedExpenses);
+      });
+  }, []);
+
+
+  const handleDeleteExpense = (id) => {
+    fetch(
+      `https://hisab-kitab-1bbd9-default-rtdb.firebaseio.com/userDataRecords/${id}.json`,
+      {
+        method: "DELETE",
+      }
+    )
+      .then(() => {
+        setExpenses((prevExpenses) =>
+          prevExpenses.filter((expense) => expense.id !== id)
+        );
+        setSnackbarSeverity("success");
+        setSnackbarMessage("Expense deleted successfully");
+        setSnackbarOpen(true);
+      })
+      .catch(() => {
+        setSnackbarSeverity("error");
+        setSnackbarMessage("Failed to delete expense");
+        setSnackbarOpen(true);
+      });
+  };
+  
+
 
   return (
     <>
@@ -190,6 +237,9 @@ const Expense = ({ onClose }) => {
             <Typography variant="subtitle1">{expense.address}</Typography>
             <Typography variant="subtitle2">{expense.amount}</Typography>
             <Typography variant="body1">{expense.items}</Typography>
+            <IconButton onClick={handleDeleteExpense}>
+              <DeleteIcon />
+            </IconButton>
           </Box>
         ))}
       </Box>
